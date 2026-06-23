@@ -64,7 +64,8 @@ const IsometricCylinder = () => (
 const QUICK_TEMPLATES = {
   persegi: [
     { name: 'Bak Fiber (50x50x50 cm)', panjang: 50, lebar: 50, tinggi: 50, tinggiAir: 45 },
-    { name: 'Bak Beton (60x60x60 cm)', panjang: 60, lebar: 60, tinggi: 60, tinggiAir: 60 }
+    { name: 'Bak Beton (60x60x60 cm)', panjang: 60, lebar: 60, tinggi: 60, tinggiAir: 60 },
+    { name: 'Bak Mandi Panjang (80x50x60 cm)', panjang: 80, lebar: 50, tinggi: 60, tinggiAir: 55 }
   ],
   silinder: [
     { name: 'Drum Biru (Ø58 x 90 cm)', diameter: 58, tinggi: 90, tinggiAir: 85 },
@@ -318,7 +319,7 @@ function App() {
             <div className="quick-stats">
               <div className="stat-item">
                 <span className="stat-label">Bentuk Fisik:</span>
-                <span className="stat-val" style={{ textTransform: 'capitalize' }}>{activeDimensions.type === 'persegi' ? 'Kotak / Persegi' : 'Silinder / Tabung'}</span>
+                <span className="stat-val" style={{ textTransform: 'capitalize' }}>{activeDimensions.type === 'persegi' ? 'Balok / Persegi Panjang' : 'Silinder / Tabung'}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">Batas 2 Kulah:</span>
@@ -350,8 +351,8 @@ function App() {
                   <IsometricBox />
                 </div>
                 <div className="shape-info">
-                  <span className="shape-title">Kotak / Balok</span>
-                  <span className="shape-desc">Bak beton, bak fiber, kolam persegi</span>
+                  <span className="shape-title">Balok / Persegi Panjang</span>
+                  <span className="shape-desc">Bak mandi panjang, kolam persegi panjang, bak beton</span>
                 </div>
               </button>
 
