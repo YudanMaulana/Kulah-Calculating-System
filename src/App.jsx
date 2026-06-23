@@ -61,46 +61,30 @@ const IsometricCylinder = () => (
   </svg>
 );
 
-const QUICK_TEMPLATES = {
-  persegi: [
-    { name: 'Bak Fiber (50x50x50 cm)', panjang: 50, lebar: 50, tinggi: 50, tinggiAir: 45 },
-    { name: 'Bak Beton (60x60x60 cm)', panjang: 60, lebar: 60, tinggi: 60, tinggiAir: 60 },
-    { name: 'Bak Mandi Panjang (80x50x60 cm)', panjang: 80, lebar: 50, tinggi: 60, tinggiAir: 55 }
-  ],
-  silinder: [
-    { name: 'Drum Biru (Ø58 x 90 cm)', diameter: 58, tinggi: 90, tinggiAir: 85 },
-    { name: 'Toren Penguin (Ø82 x 111 cm)', diameter: 82, tinggi: 111, tinggiAir: 100 },
-    { name: 'Ember Hitam (Ø30 x 25 cm)', diameter: 30, tinggi: 25, tinggiAir: 22 }
-  ]
-};
+
 
 function App() {
   const [type, setType] = useState('persegi'); // 'persegi' | 'silinder'
   const [standard, setStandard] = useState(216); // 216 L vs 270 L
   
-  // Inputs state (updates instantly on keystroke/slider)
+  // Inputs state (updates start empty for a challenge)
   const [inputs, setInputs] = useState({
-    panjang: 60,
-    lebar: 60,
-    tinggi: 60,
-    tinggiAir: 60,
-    diameter: 58
+    panjang: '',
+    lebar: '',
+    tinggi: '',
+    tinggiAir: '',
+    diameter: ''
   });
 
-  // Active state (only updates and visualizes when clicking "Bikin Wadah")
+  // Active state (starts at 0 on first load)
   const [activeDimensions, setActiveDimensions] = useState({
     type: 'persegi',
-    panjang: 60,
-    lebar: 60,
-    tinggi: 60,
-    tinggiAir: 60,
-    diameter: 58
+    panjang: 0,
+    lebar: 0,
+    tinggi: 0,
+    tinggiAir: 0,
+    diameter: 0
   });
-
-  // Automatically trigger build container on mount
-  useEffect(() => {
-    handleBuildContainer();
-  }, []);
 
   // Calculate volumes based on active dimensions
   const calculateVolume = (isMax = false) => {
@@ -122,46 +106,43 @@ function App() {
   const waterPercent = Math.min(100, Math.max(0, Math.round((activeDimensions.tinggiAir / activeDimensions.tinggi) * 100)));
 
   // Determine status
-  let status = 'tidak-sah'; // 'sah', 'riskan', 'tidak-sah'
-  if (currentVolume >= standard) {
-    status = 'sah';
-  } else if (maxVolume >= standard) {
-    status = 'riskan';
+  let status = 'belum-dihitung'; // 'belum-dihitung', 'sah', 'riskan', 'tidak-sah'
+  if (activeDimensions.tinggi > 0) {
+    if (currentVolume >= standard) {
+      status = 'sah';
+    } else if (maxVolume >= standard) {
+      status = 'riskan';
+    } else {
+      status = 'tidak-sah';
+    }
   }
 
-  // Handle shape change and reset inputs
+  // Handle shape change and reset inputs to empty
   const handleShapeChange = (selectedShape) => {
     setType(selectedShape);
-    if (selectedShape === 'persegi') {
-      setInputs(prev => ({
-        ...prev,
-        panjang: 60,
-        lebar: 60,
-        tinggi: 60,
-        tinggiAir: 50
-      }));
-    } else {
-      setInputs(prev => ({
-        ...prev,
-        diameter: 58,
-        tinggi: 90,
-        tinggiAir: 80
-      }));
-    }
+    setInputs({
+      panjang: '',
+      lebar: '',
+      tinggi: '',
+      tinggiAir: '',
+      diameter: ''
+    });
   };
 
   // Handle input changes (instantly updates inputs state)
   const handleInputChange = (field, value) => {
-    const numVal = Math.max(0, parseFloat(value) || 0);
+    // Keep empty strings as empty strings for input typing comfort, otherwise parse float
+    const cleanValue = value === '' ? '' : Math.max(0, parseFloat(value) || 0);
+    
     setInputs(prev => {
-      const newDims = { ...prev, [field]: numVal };
+      const newDims = { ...prev, [field]: cleanValue };
       
       // Validation: air height cannot exceed tank height
-      if (field === 'tinggi' && prev.tinggiAir > numVal) {
-        newDims.tinggiAir = numVal;
+      if (field === 'tinggi' && prev.tinggiAir > cleanValue && cleanValue !== '') {
+        newDims.tinggiAir = cleanValue;
       }
-      if (field === 'tinggiAir' && numVal > prev.tinggi) {
-        newDims.tinggi = numVal;
+      if (field === 'tinggiAir' && cleanValue > prev.tinggi && prev.tinggi !== '') {
+        newDims.tinggi = cleanValue;
       }
       
       return newDims;
@@ -171,33 +152,31 @@ function App() {
   // Click handler to build/calculate
   const handleBuildContainer = (e) => {
     if (e) e.preventDefault();
+    
+    // Parse values to number, fallback to 0 if blank
+    const parsedPanjang = parseFloat(inputs.panjang) || 0;
+    const parsedLebar = parseFloat(inputs.lebar) || 0;
+    const parsedTinggi = parseFloat(inputs.tinggi) || 0;
+    const parsedTinggiAir = parseFloat(inputs.tinggiAir) || 0;
+    const parsedDiameter = parseFloat(inputs.diameter) || 0;
+
     setActiveDimensions({
       type: type,
-      ...inputs
+      panjang: parsedPanjang,
+      lebar: parsedLebar,
+      tinggi: parsedTinggi,
+      tinggiAir: parsedTinggiAir,
+      diameter: parsedDiameter
     });
   };
 
   // Check if current inputs are different from the active built container
   const isDirty = 
     type !== activeDimensions.type ||
-    inputs.tinggi !== activeDimensions.tinggi ||
-    inputs.tinggiAir !== activeDimensions.tinggiAir ||
-    (type === 'persegi' && (inputs.panjang !== activeDimensions.panjang || inputs.lebar !== activeDimensions.lebar)) ||
-    (type === 'silinder' && (inputs.diameter !== activeDimensions.diameter));
-
-  // Load a quick template size
-  const loadTemplate = (tmpl) => {
-    setInputs(prev => ({
-      ...prev,
-      ...tmpl
-    }));
-    // Auto-apply templates immediately for smooth UX
-    setActiveDimensions({
-      type: type,
-      ...inputs,
-      ...tmpl
-    });
-  };
+    (parseFloat(inputs.tinggi) || 0) !== activeDimensions.tinggi ||
+    (parseFloat(inputs.tinggiAir) || 0) !== activeDimensions.tinggiAir ||
+    (type === 'persegi' && ((parseFloat(inputs.panjang) || 0) !== activeDimensions.panjang || (parseFloat(inputs.lebar) || 0) !== activeDimensions.lebar)) ||
+    (type === 'silinder' && ((parseFloat(inputs.diameter) || 0) !== activeDimensions.diameter));
 
   return (
     <div className="app-container">
@@ -213,8 +192,8 @@ function App() {
       {/* Main content grid */}
       <main className="simplified-layout">
         
-        {/* Danger Alert Banner if volume is less than standard */}
-        {currentVolume < standard && (
+        {/* Danger Alert Banner if volume is less than standard (Only when built) */}
+        {activeDimensions.tinggi > 0 && currentVolume < standard && (
           <div className="danger-alert-banner">
             <div className="danger-alert-icon">⚠️</div>
             <div className="danger-alert-content">
@@ -222,18 +201,7 @@ function App() {
               <p>
                 Tinggi air saat ini hanya <b>{activeDimensions.tinggiAir} cm</b>. Volume air <b>kurang dari 2 Kulah</b>, sehingga air ini sangat rentan menjadi najis (mutanajjis) jika kemasukan kotoran sekecil apa pun. <b>DILARANG berwudu langsung dari dalam wadah ini jika air telah bercampur najis</b>.
               </p>
-              {maxVolume >= standard ? (
-                <button 
-                  className="fill-water-btn"
-                  onClick={() => {
-                    const reqHeight = Math.ceil(standard * 1000 / (activeDimensions.type === 'persegi' ? activeDimensions.panjang * activeDimensions.lebar : Math.PI * Math.pow(activeDimensions.diameter/2, 2)));
-                    setInputs(prev => ({ ...prev, tinggiAir: reqHeight }));
-                    setActiveDimensions(prev => ({ ...prev, tinggiAir: reqHeight }));
-                  }}
-                >
-                  Isi Air Otomatis ke Batas Aman ({Math.ceil(standard * 1000 / (activeDimensions.type === 'persegi' ? activeDimensions.panjang * activeDimensions.lebar : Math.PI * Math.pow(activeDimensions.diameter/2, 2)))} cm)
-                </button>
-              ) : (
+              {maxVolume < standard && (
                 <div className="danger-alert-tip">
                   *Wadah terlalu kecil untuk menampung air 2 Kulah. Agar wudu sah dan terhindar dari air musta'mal/najis, alirkan air keluar wadah (misal dengan keran) atau tuangkan air, jangan mencelupkan anggota tubuh langsung ke dalam wadah ini.
                 </div>
@@ -308,7 +276,7 @@ function App() {
                   `Volume air Anda (${currentVolume}L) sudah mencapai batas minimal 2 Kulah (${standard}L). Air ini suci mensucikan. Wudu di dalam wadah ini tetap sah dan air tidak bisa menjadi najis kecuali jika berubah bau, rasa, atau warna.`
                 )}
                 {status === 'riskan' && (
-                  `Kapasitas wadah mencukupi (${maxVolume}L), namun pengisian air saat ini (${currentVolume}L) masih kurang dari batas ${standard}L. Disarankan mengisi air hingga minimal setinggi ${Math.ceil(standard * 1000 / (activeDimensions.type === 'persegi' ? activeDimensions.panjang * activeDimensions.lebar : Math.PI * Math.pow(activeDimensions.diameter/2, 2)))} cm agar sah digunakan berwudu secara langsung.`
+                  `Kapasitas wadah mencukupi (${maxVolume}L), namun pengisian air saat ini (${currentVolume}L) masih kurang dari batas ${standard}L. Silakan sesuaikan tinggi pengisian air wadah Anda agar volume airnya mencukupi.`
                 )}
                 {status === 'tidak-sah' && (
                   `Volume maksimal wadah ini hanya ${maxVolume}L, kurang dari batas 2 Kulah (${standard}L). Wudu tetap sah asalkan air tidak terkena najis/bekas bersuci. Sangat disarankan berwudu menggunakan aliran keran/kucuran agar terhindar dari najis.`
@@ -504,24 +472,6 @@ function App() {
               )}
             </div>
 
-            {/* STEP 5: QUICK SIZE TEMPLATES (PRESETS AS AUTOFILL TAGS) */}
-            <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-                💡 Pilihan Cepat (Gunakan Ukuran Umum):
-              </span>
-              <div className="preset-tags">
-                {QUICK_TEMPLATES[type].map((tmpl, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="preset-tag-btn"
-                    onClick={() => loadTemplate(tmpl)}
-                  >
-                    ⚡ {tmpl.name}
-                  </button>
-                ))}
-              </div>
-            </div>
           </form>
         </div>
 
