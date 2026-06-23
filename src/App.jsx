@@ -240,6 +240,12 @@ function App() {
                   className="water-body"
                   style={{ height: `${waterPercent}%` }}
                 />
+                {/* Liters overlay in the center */}
+                {activeDimensions.tinggi > 0 && (
+                  <div className="tank-liters-overlay">
+                    {currentVolume} L
+                  </div>
+                )}
               </div>
 
               {/* Water Height Label Line (Right) */}
@@ -255,9 +261,10 @@ function App() {
               )}
             </div>
 
-            <div className="liters-display">
-              <div className="liters-number">{currentVolume} L</div>
-              <div className="liters-label">Air Saat Ini / Maksimal {maxVolume}L</div>
+            <div className="liters-display" style={{ marginTop: '0.75rem' }}>
+              <div className="liters-label" style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                Kapasitas Wadah Maksimal: <b>{maxVolume} L</b>
+              </div>
             </div>
           </div>
 
