@@ -168,6 +168,12 @@ function App() {
       tinggiAir: parsedTinggiAir,
       diameter: parsedDiameter
     });
+
+    // Smooth scroll to top of window (where visualizer card is located)
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   // Check if current inputs are different from the active built container
